@@ -18,7 +18,7 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
     int idx;
     double calculo = 0;
     
-    //Faz os calculos de carga de trabalho posições, respeitando o BLOCK_SIZE estipulado
+    //Faz os calculos de 'carga de trabalho' posições, respeitando o BLOCK_SIZE estipulado
     for (int pulo = 0; pulo < gridDim.x; ++pulo) 
     {
         //Calcula a posição do valor que iremos pegar da matriz A
@@ -76,10 +76,11 @@ int main(int argc,char **argv){
     //Lê a dimensão da matriz
     fscanf(stdin,"%d\n",&tam); 
 
-    //Aloca as matrizes
-    matrizA=(double*)malloc(tam*tam*sizeof(double));
-    matrizB=(double*)malloc(tam*tam*sizeof(double));
-    matrizC=(double*)malloc(tam*tam*sizeof(double));
+    //Aloca as matrizes do host
+    cudaMallocHost((void**)&matrizA,tam*tam*sizeof(double));
+    cudaMallocHost((void**)&matrizB,tam*tam*sizeof(double));
+    cudaMallocHost((void**)&matrizC,tam*tam*sizeof(double));
+    //Aloca as matrizes do device
     cudaMalloc((void **) &matrizACuda, sizeof(double)*tam*tam);
     cudaMalloc((void **) &matrizBCuda, sizeof(double)*tam*tam);
     cudaMalloc((void **) &matrizCCuda, sizeof(double)*tam*tam);
@@ -96,8 +97,8 @@ int main(int argc,char **argv){
     cudaMemcpy(matrizACuda, matrizA, tam*tam*sizeof(double),cudaMemcpyHostToDevice);
     cudaMemcpy(matrizBCuda, matrizB, tam*tam*sizeof(double),cudaMemcpyHostToDevice);
     
-    //Calcula a carga de trabalho
-    unsigned int carga_trabalho = (tam + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    //Calcula a divisão da carga de trabalho
+    int carga_trabalho = (tam + BLOCK_SIZE - 1) / BLOCK_SIZE;
     //Define nossas threads e nossos blocos
     dim3 dimGrid(carga_trabalho, carga_trabalho);
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
