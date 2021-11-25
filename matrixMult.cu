@@ -6,8 +6,8 @@
 
 __global__ void gpu_square_matrix_mult(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int n) 
 {
-    __shared__ double tile_a[BLOCK_SIZE][BLOCK_SIZE];
-    __shared__ double tile_b[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ double subMatrizA[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ double subMatrizB[BLOCK_SIZE][BLOCK_SIZE];
 
     int linha = blockIdx.y * BLOCK_SIZE + threadIdx.y;
     int coluna = blockIdx.x * BLOCK_SIZE + threadIdx.x;
@@ -20,27 +20,27 @@ __global__ void gpu_square_matrix_mult(double *matrizACuda, double *matrizBCuda,
         if(idx >= n*n)
         {
             // n may not divisible by BLOCK_SIZE
-            tile_a[threadIdx.y][threadIdx.x] = 0;
+            subMatrizA[threadIdx.y][threadIdx.x] = 0;
         }
         else
         {
-            tile_a[threadIdx.y][threadIdx.x] = matrizACuda[idx];
+            subMatrizA[threadIdx.y][threadIdx.x] = matrizACuda[idx];
         }
 
         idx = (sub * BLOCK_SIZE + threadIdx.y) * n + coluna;
         if(idx >= n*n)
         {
-            tile_b[threadIdx.y][threadIdx.x] = 0;
+            subMatrizB[threadIdx.y][threadIdx.x] = 0;
         }  
         else
         {
-            tile_b[threadIdx.y][threadIdx.x] = matrizBCuda[idx];
+            subMatrizB[threadIdx.y][threadIdx.x] = matrizBCuda[idx];
         }
         __syncthreads();
 
         for (int k = 0; k < BLOCK_SIZE; ++k) 
         {
-            tmp += tile_a[threadIdx.y][k] * tile_b[k][threadIdx.x];
+            tmp += subMatrizA[threadIdx.y][k] * subMatrizB[k][threadIdx.x];
         }
         __syncthreads();
     }
@@ -93,7 +93,7 @@ int main(int argc,char **argv){
     //Define nossas threads e nossos blocos
     dim3 dimGrid(carga_trabalho, carga_trabalho);
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    
+
     //Chama a função para fazer a multiplicação
     gpu_square_matrix_mult<<<dimGrid, dimBlock>>>(matrizACuda, matrizBCuda, matrizCCuda, tam);    
 
