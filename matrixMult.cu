@@ -88,10 +88,13 @@ int main(int argc,char **argv){
             for(k=0;k<tam;k++)
                 matrizC[i*tam+j]+=matrizA[i*tam+k]*matrizB[k*tam+j];*/
     
-    unsigned int grid_rows = (tam + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    unsigned int grid_cols = (tam + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    dim3 dimGrid(grid_cols, grid_rows);
+    //Calcula a carga de trabalho
+    unsigned int carga_trabalho = (tam + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    //Define nossas threads e nossos blocos
+    dim3 dimGrid(carga_trabalho, carga_trabalho);
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+    
+    //Chama a função para fazer a multiplicação
     gpu_square_matrix_mult<<<dimGrid, dimBlock>>>(matrizACuda, matrizBCuda, matrizCCuda, tam);    
 
     //Envia a resposta do Device para o Host
