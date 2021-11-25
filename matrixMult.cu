@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include <cuda.h>
 
-#define BLOCK_SIZE 16
+#define BLOCK_SIZE 8
 
 __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int tam) 
 {
