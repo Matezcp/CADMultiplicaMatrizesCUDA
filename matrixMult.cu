@@ -81,12 +81,6 @@ int main(int argc,char **argv){
     //Envia do host para o Device
     cudaMemcpy(matrizACuda, matrizA, tam*tam*sizeof(double),cudaMemcpyHostToDevice);
     cudaMemcpy(matrizBCuda, matrizB, tam*tam*sizeof(double),cudaMemcpyHostToDevice);
-
-    //Calcula C=A*B
-    /*for(i=0;i<tam;i++)
-        for(j=0;j<tam;j++)
-            for(k=0;k<tam;k++)
-                matrizC[i*tam+j]+=matrizA[i*tam+k]*matrizB[k*tam+j];*/
     
     //Calcula a carga de trabalho
     unsigned int carga_trabalho = (tam + BLOCK_SIZE - 1) / BLOCK_SIZE;
