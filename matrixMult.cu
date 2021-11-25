@@ -6,44 +6,58 @@
 
 __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int tam) 
 {
+    /*Utilizamos 2 sub matrizes, que irão armazenar os valores das matrizes A e B necessários
+    para nosso cálculo, essas variáveis são compartilhadas entre as threads*/
     __shared__ double subMatrizA[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ double subMatrizB[BLOCK_SIZE][BLOCK_SIZE];
 
+    //Calculamos qual linha é de nossa responsabilidade
     int linha = blockIdx.y * BLOCK_SIZE + threadIdx.y;
+    //Calculamos qual coluna é de nossa responsabilidade
     int coluna = blockIdx.x * BLOCK_SIZE + threadIdx.x;
     int idx;
     double calculo = 0;
-
-    for (int sub = 0; sub < gridDim.x; ++sub) 
+    
+    //Faz os calculos de carga de trabalho posições, respeitando o BLOCK_SIZE estipulado
+    for (int pulo = 0; pulo < gridDim.x; ++pulo) 
     {
-        idx = linha * tam + sub * BLOCK_SIZE + threadIdx.x;
+        //Calcula a posição do valor que iremos pegar da matriz A
+        idx = linha * tam + pulo * BLOCK_SIZE + threadIdx.x;
+        //Se a posição ultrapssar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
         {
-            // n may not divisible by BLOCK_SIZE
             subMatrizA[threadIdx.y][threadIdx.x] = 0;
         }
+        //Caso contrário colocamos o valor em nossa sub matriz
         else
         {
             subMatrizA[threadIdx.y][threadIdx.x] = matrizACuda[idx];
         }
-
-        idx = (sub * BLOCK_SIZE + threadIdx.y) * tam + coluna;
+        //Calcula a posição do valor que iremos pegar da matriz B
+        idx = (pulo * BLOCK_SIZE + threadIdx.y) * tam + coluna;
+        //Se a posição ultrapssar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
         {
             subMatrizB[threadIdx.y][threadIdx.x] = 0;
         }  
+        //Caso contrário colocamos o valor em nossa sub matriz
         else
         {
             subMatrizB[threadIdx.y][threadIdx.x] = matrizBCuda[idx];
         }
+
+        //É necessário haver uma sincronização das threads para somarmos a resposta, por conta de nossa variáveis compartilhadas
         __syncthreads();
-        
+        //É feito o calculo do valor
         for (int k = 0; k < BLOCK_SIZE; ++k) 
         {
             calculo += subMatrizA[threadIdx.y][k] * subMatrizB[k][threadIdx.x];
         }
+
+        //Aguarda as threads sincronizarem novamente
         __syncthreads();
     }
+    //Se estiver tudo corretor com nossos indices de linha e coluna atualizamos o valor da matriz resultado C
     if(linha < tam && coluna < tam)
     {
         matrizCCuda[linha * tam + coluna] = calculo;
@@ -57,7 +71,7 @@ int main(int argc,char **argv){
     //Declara as matrizes que ficarão na CPU
     double *matrizA,*matrizB,*matrizC; 
     //Declara as variáveis de tamanho e índice
-    int tam,i,j,k; 
+    int tam,i,j;
 
     //Lê a dimensão da matriz
     fscanf(stdin,"%d\n",&tam); 
