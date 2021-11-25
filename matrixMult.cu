@@ -4,7 +4,7 @@
 
 #define BLOCK_SIZE 16
 
-__global__ void gpu_square_matrix_mult(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int n) 
+__global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int n) 
 {
     __shared__ double subMatrizA[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ double subMatrizB[BLOCK_SIZE][BLOCK_SIZE];
@@ -95,7 +95,7 @@ int main(int argc,char **argv){
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
 
     //Chama a função para fazer a multiplicação
-    gpu_square_matrix_mult<<<dimGrid, dimBlock>>>(matrizACuda, matrizBCuda, matrizCCuda, tam);    
+    multiplicaMatriz<<<dimGrid, dimBlock>>>(matrizACuda, matrizBCuda, matrizCCuda, tam);    
 
     //Envia a resposta do Device para o Host
     cudaMemcpy(matrizC, matrizCCuda, sizeof(double)*tam*tam, cudaMemcpyDeviceToHost);
