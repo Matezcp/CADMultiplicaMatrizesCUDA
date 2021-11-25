@@ -1,11 +1,10 @@
-
 #include<stdio.h>
 #include<stdlib.h>
 #include <cuda.h>
 
 #define BLOCK_SIZE 16
 
-__global__ void gpu_square_matrix_mult(double *d_a, double *d_b, double *d_result, int n) 
+__global__ void gpu_square_matrix_mult(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int n) 
 {
     __shared__ double tile_a[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ double tile_b[BLOCK_SIZE][BLOCK_SIZE];
@@ -25,7 +24,7 @@ __global__ void gpu_square_matrix_mult(double *d_a, double *d_b, double *d_resul
         }
         else
         {
-            tile_a[threadIdx.y][threadIdx.x] = d_a[idx];
+            tile_a[threadIdx.y][threadIdx.x] = matrizACuda[idx];
         }
 
         idx = (sub * BLOCK_SIZE + threadIdx.y) * n + col;
@@ -35,7 +34,7 @@ __global__ void gpu_square_matrix_mult(double *d_a, double *d_b, double *d_resul
         }  
         else
         {
-            tile_b[threadIdx.y][threadIdx.x] = d_b[idx];
+            tile_b[threadIdx.y][threadIdx.x] = matrizBCuda[idx];
         }
         __syncthreads();
 
@@ -47,7 +46,7 @@ __global__ void gpu_square_matrix_mult(double *d_a, double *d_b, double *d_resul
     }
     if(row < n && col < n)
     {
-        d_result[row * n + col] = tmp;
+        matrizCCuda[row * n + col] = tmp;
     }
 }
 
