@@ -9,14 +9,14 @@ __global__ void gpu_square_matrix_mult(double *matrizACuda, double *matrizBCuda,
     __shared__ double tile_a[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ double tile_b[BLOCK_SIZE][BLOCK_SIZE];
 
-    int row = blockIdx.y * BLOCK_SIZE + threadIdx.y;
-    int col = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+    int linha = blockIdx.y * BLOCK_SIZE + threadIdx.y;
+    int coluna = blockIdx.x * BLOCK_SIZE + threadIdx.x;
     int tmp = 0;
     int idx;
 
     for (int sub = 0; sub < gridDim.x; ++sub) 
     {
-        idx = row * n + sub * BLOCK_SIZE + threadIdx.x;
+        idx = linha * n + sub * BLOCK_SIZE + threadIdx.x;
         if(idx >= n*n)
         {
             // n may not divisible by BLOCK_SIZE
@@ -27,7 +27,7 @@ __global__ void gpu_square_matrix_mult(double *matrizACuda, double *matrizBCuda,
             tile_a[threadIdx.y][threadIdx.x] = matrizACuda[idx];
         }
 
-        idx = (sub * BLOCK_SIZE + threadIdx.y) * n + col;
+        idx = (sub * BLOCK_SIZE + threadIdx.y) * n + coluna;
         if(idx >= n*n)
         {
             tile_b[threadIdx.y][threadIdx.x] = 0;
@@ -44,9 +44,9 @@ __global__ void gpu_square_matrix_mult(double *matrizACuda, double *matrizBCuda,
         }
         __syncthreads();
     }
-    if(row < n && col < n)
+    if(linha < n && coluna < n)
     {
-        matrizCCuda[row * n + col] = tmp;
+        matrizCCuda[linha * n + coluna] = tmp;
     }
 }
 
