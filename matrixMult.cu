@@ -11,8 +11,8 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
 
     int linha = blockIdx.y * BLOCK_SIZE + threadIdx.y;
     int coluna = blockIdx.x * BLOCK_SIZE + threadIdx.x;
-    int tmp = 0;
     int idx;
+    double calculo = 0;
 
     for (int sub = 0; sub < gridDim.x; ++sub) 
     {
@@ -37,16 +37,16 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
             subMatrizB[threadIdx.y][threadIdx.x] = matrizBCuda[idx];
         }
         __syncthreads();
-
+        
         for (int k = 0; k < BLOCK_SIZE; ++k) 
         {
-            tmp += subMatrizA[threadIdx.y][k] * subMatrizB[k][threadIdx.x];
+            calculo += subMatrizA[threadIdx.y][k] * subMatrizB[k][threadIdx.x];
         }
         __syncthreads();
     }
     if(linha < n && coluna < n)
     {
-        matrizCCuda[linha * n + coluna] = tmp;
+        matrizCCuda[linha * n + coluna] = calculo;
     }
 }
 
