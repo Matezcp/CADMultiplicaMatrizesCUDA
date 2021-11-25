@@ -15,14 +15,15 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
     int linha = blockIdx.y * BLOCK_SIZE + threadIdx.y;
     //Calculamos qual coluna é de nossa responsabilidade
     int coluna = blockIdx.x * BLOCK_SIZE + threadIdx.x;
-    int idx;
-    double calculo = 0;
     
+    //Variavel que armazenará o valor calculado
+    double calculo = 0;
+
     //Faz os calculos de 'carga de trabalho' posições, respeitando o BLOCK_SIZE estipulado
     for (int pulo = 0; pulo < gridDim.x; ++pulo) 
     {
         //Calcula a posição do valor que iremos pegar da matriz A
-        idx = linha * tam + pulo * BLOCK_SIZE + threadIdx.x;
+        int idx = linha * tam + pulo * BLOCK_SIZE + threadIdx.x;
         //Se a posição ultrapssar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
         {
@@ -46,7 +47,7 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
             subMatrizB[threadIdx.y][threadIdx.x] = matrizBCuda[idx];
         }
 
-        //É necessário haver uma sincronização das threads para somarmos a resposta, por conta de nossa variáveis compartilhadas
+        //É necessário haver uma sincronização das threads para somarmos a resposta, por conta de nossas variáveis compartilhadas
         __syncthreads();
         //É feito o calculo do valor
         for (int k = 0; k < BLOCK_SIZE; ++k) 
@@ -54,10 +55,10 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
             calculo += subMatrizA[threadIdx.y][k] * subMatrizB[k][threadIdx.x];
         }
 
-        //Aguarda as threads sincronizarem novamente
+        //Aguarda as threads sincronizarem novamente antes de começar uma nova iteração
         __syncthreads();
     }
-    //Se estiver tudo corretor com nossos indices de linha e coluna atualizamos o valor da matriz resultado C
+    //Se estiver tudo correto com nossos indices de linha e coluna atualizamos o valor da matriz resultado C
     if(linha < tam && coluna < tam)
     {
         matrizCCuda[linha * tam + coluna] = calculo;
