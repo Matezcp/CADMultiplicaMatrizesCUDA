@@ -4,7 +4,7 @@
 
 #define BLOCK_SIZE 16
 
-__global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int n) 
+__global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int tam) 
 {
     __shared__ double subMatrizA[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ double subMatrizB[BLOCK_SIZE][BLOCK_SIZE];
@@ -16,8 +16,8 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
 
     for (int sub = 0; sub < gridDim.x; ++sub) 
     {
-        idx = linha * n + sub * BLOCK_SIZE + threadIdx.x;
-        if(idx >= n*n)
+        idx = linha * tam + sub * BLOCK_SIZE + threadIdx.x;
+        if(idx >= tam*tam)
         {
             // n may not divisible by BLOCK_SIZE
             subMatrizA[threadIdx.y][threadIdx.x] = 0;
@@ -27,8 +27,8 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
             subMatrizA[threadIdx.y][threadIdx.x] = matrizACuda[idx];
         }
 
-        idx = (sub * BLOCK_SIZE + threadIdx.y) * n + coluna;
-        if(idx >= n*n)
+        idx = (sub * BLOCK_SIZE + threadIdx.y) * tam + coluna;
+        if(idx >= tam*tam)
         {
             subMatrizB[threadIdx.y][threadIdx.x] = 0;
         }  
@@ -44,9 +44,9 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
         }
         __syncthreads();
     }
-    if(linha < n && coluna < n)
+    if(linha < tam && coluna < tam)
     {
-        matrizCCuda[linha * n + coluna] = calculo;
+        matrizCCuda[linha * tam + coluna] = calculo;
     }
 }
 
