@@ -19,6 +19,9 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
     //Variavel que armazenará o valor calculado
     double calculo = 0;
 
+    __syncthreads();
+    printf("----------------------------\nINFOS: gridim.x: %d blockidx.x: %d blockIdx.y: %d threadIdx.x: %d threadIdx.y: %d Linha: %d coluna: %d\n",gridDim.x,blockIdx.x,blockIdx.y,threadIdx.x,threadIdx.y,linha,coluna);
+
     //Faz os calculos blocksPerGrid vezes 
     for (int pulo = 0; pulo < gridDim.x; ++pulo) 
     {
@@ -87,13 +90,13 @@ int main(int argc,char **argv){
     cudaMemcpy(matrizBCuda, matrizB, tam*tam*sizeof(double),cudaMemcpyHostToDevice);
     
     //Calcula a quantidade de blocos por grade (haverão tam threads por grade)
-    int blocksPerGrid = (tam + THREADSPERBLOCK - 1) / THREADSPERBLOCK;
+    int blocksPerGrid = (tam+THREADSPERBLOCK-1)/THREADSPERBLOCK;
     //Define nossas threads e nossos blocos
-    dim3 dimGrid(blocksPerGrid, blocksPerGrid);
-    dim3 dimBlock(THREADSPERBLOCK, THREADSPERBLOCK);
+    dim3 dimGrid(blocksPerGrid,blocksPerGrid);
+    dim3 dimBlock(THREADSPERBLOCK,THREADSPERBLOCK);
 
     //Chama a função para fazer a multiplicação
-    multiplicaMatriz<<<dimGrid, dimBlock>>>(matrizACuda, matrizBCuda, matrizCCuda, tam);    
+    multiplicaMatriz<<<dimGrid, dimBlock>>>(matrizACuda, matrizBCuda, matrizCCuda, tam);
 
     //Envia a resposta do Device para o Host
     cudaMemcpy(matrizC, matrizCCuda, sizeof(double)*tam*tam, cudaMemcpyDeviceToHost);
