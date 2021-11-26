@@ -20,7 +20,7 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
     double calculo = 0;
 
 
-    //Faz os calculos blocksPerGrid vezes 
+    //Faz o calculo o número de vezes necessário (basicamente iterando entre as grades)
     for (int pulo = 0; pulo < gridDim.x; ++pulo) 
     {
         //Calcula a posição do valor que iremos pegar da matriz A
