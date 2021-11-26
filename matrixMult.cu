@@ -21,10 +21,10 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
 
 
     //Faz o calculo o número de vezes necessário (basicamente iterando entre as grades)
-    for (int pulo = 0; pulo < gridDim.x; ++pulo) 
+    for (int grade = 0; grade < gridDim.x; grade++) 
     {
         //Calcula a posição do valor que iremos pegar da matriz A
-        int idx = linha * tam + pulo * THREADSPERBLOCK + threadIdx.y;
+        int idx = linha * tam + grade * THREADSPERBLOCK + threadIdx.y;
         //Se a posição ultrapassar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
             subMatrizA[threadIdx.x][threadIdx.y] = 0;
@@ -32,7 +32,7 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
         else
             subMatrizA[threadIdx.x][threadIdx.y] = matrizACuda[idx];
         //Calcula a posição do valor que iremos pegar da matriz B
-        idx = (pulo * THREADSPERBLOCK + threadIdx.x) * tam + coluna;
+        idx = (grade * THREADSPERBLOCK + threadIdx.x) * tam + coluna;
         //Se a posição ultrapassar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
             subMatrizB[threadIdx.x][threadIdx.y] = 0;
@@ -43,7 +43,7 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
         //É necessário haver uma sincronização das threads para somarmos a resposta, por conta de nossas variáveis compartilhadas
         __syncthreads();
         //É feito o calculo do valor
-        for (int k = 0; k < THREADSPERBLOCK; ++k) 
+        for (int k = 0; k < THREADSPERBLOCK; k++) 
             calculo += subMatrizA[threadIdx.x][k] * subMatrizB[k][threadIdx.y];
 
         //Aguarda as threads sincronizarem novamente antes de começar uma nova iteração
