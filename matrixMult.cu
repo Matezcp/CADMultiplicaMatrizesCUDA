@@ -40,7 +40,7 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
         else
             subMatrizB[threadIdx.x][threadIdx.y] = matrizBCuda[idx];
 
-        //É necessário haver uma sincronização das threads para somarmos a resposta, por conta de nossas variáveis compartilhadas
+        //É necessário haver uma sincronização das threads para somarmos a resposta, para que nossas variáveis compartilhadas estejam corretamente preenchidas
         __syncthreads();
         //É feito o calculo do valor
         for (int k = 0; k < THREADSPERBLOCK; k++) 
