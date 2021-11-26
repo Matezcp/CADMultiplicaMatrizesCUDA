@@ -2,29 +2,29 @@
 #include<stdlib.h>
 #include <cuda.h>
 
-#define BLOCK_SIZE 8
+#define THREADSPERBLOCK 8
 
 __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, double *matrizCCuda, int tam) 
 {
     /*Utilizamos 2 sub matrizes, que irão armazenar os valores das matrizes A e B necessários
     para nosso cálculo, essas variáveis são compartilhadas entre as threads*/
-    __shared__ double subMatrizA[BLOCK_SIZE][BLOCK_SIZE];
-    __shared__ double subMatrizB[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ double subMatrizA[THREADSPERBLOCK][THREADSPERBLOCK];
+    __shared__ double subMatrizB[THREADSPERBLOCK][THREADSPERBLOCK];
 
     //Calculamos qual linha é de nossa responsabilidade
-    int linha = blockIdx.y * BLOCK_SIZE + threadIdx.y;
+    int linha = blockIdx.y * THREADSPERBLOCK + threadIdx.y;
     //Calculamos qual coluna é de nossa responsabilidade
-    int coluna = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+    int coluna = blockIdx.x * THREADSPERBLOCK + threadIdx.x;
     
     //Variavel que armazenará o valor calculado
     double calculo = 0;
 
-    //Faz os calculos de 'carga de trabalho' posições, respeitando o BLOCK_SIZE estipulado
+    //Faz os calculos blocksPerGrid vezes 
     for (int pulo = 0; pulo < gridDim.x; ++pulo) 
     {
         //Calcula a posição do valor que iremos pegar da matriz A
-        int idx = linha * tam + pulo * BLOCK_SIZE + threadIdx.x;
-        //Se a posição ultrapssar o limite, apenas colocamos 0 em nossa sub matriz
+        int idx = linha * tam + pulo * THREADSPERBLOCK + threadIdx.x;
+        //Se a posição ultrapassar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
         {
             subMatrizA[threadIdx.y][threadIdx.x] = 0;
@@ -35,8 +35,8 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
             subMatrizA[threadIdx.y][threadIdx.x] = matrizACuda[idx];
         }
         //Calcula a posição do valor que iremos pegar da matriz B
-        idx = (pulo * BLOCK_SIZE + threadIdx.y) * tam + coluna;
-        //Se a posição ultrapssar o limite, apenas colocamos 0 em nossa sub matriz
+        idx = (pulo * THREADSPERBLOCK + threadIdx.y) * tam + coluna;
+        //Se a posição ultrapassar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
         {
             subMatrizB[threadIdx.y][threadIdx.x] = 0;
@@ -50,7 +50,7 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
         //É necessário haver uma sincronização das threads para somarmos a resposta, por conta de nossas variáveis compartilhadas
         __syncthreads();
         //É feito o calculo do valor
-        for (int k = 0; k < BLOCK_SIZE; ++k) 
+        for (int k = 0; k < THREADSPERBLOCK; ++k) 
         {
             calculo += subMatrizA[threadIdx.y][k] * subMatrizB[k][threadIdx.x];
         }
@@ -98,11 +98,11 @@ int main(int argc,char **argv){
     cudaMemcpy(matrizACuda, matrizA, tam*tam*sizeof(double),cudaMemcpyHostToDevice);
     cudaMemcpy(matrizBCuda, matrizB, tam*tam*sizeof(double),cudaMemcpyHostToDevice);
     
-    //Calcula a divisão da carga de trabalho
-    int carga_trabalho = (tam + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    //Calcula a quantidade de blocos por grade (haverão tam threads por grade)
+    int blocksPerGrid = (tam + THREADSPERBLOCK - 1) / THREADSPERBLOCK;
     //Define nossas threads e nossos blocos
-    dim3 dimGrid(carga_trabalho, carga_trabalho);
-    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 dimGrid(blocksPerGrid, blocksPerGrid);
+    dim3 dimBlock(THREADSPERBLOCK, THREADSPERBLOCK);
 
     //Chama a função para fazer a multiplicação
     multiplicaMatriz<<<dimGrid, dimBlock>>>(matrizACuda, matrizBCuda, matrizCCuda, tam);    
@@ -117,10 +117,11 @@ int main(int argc,char **argv){
         printf("\n");
     }
     
-    //Desaloca as matrizes
+    //Desaloca as matrizes do device
     cudaFree(matrizACuda);
     cudaFree(matrizBCuda);
     cudaFree(matrizCCuda);
+    //Desaloca as matrizes do host
     cudaFreeHost(matrizA);
     cudaFreeHost(matrizB);
     cudaFreeHost(matrizC);
