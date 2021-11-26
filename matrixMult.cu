@@ -26,43 +26,31 @@ __global__ void multiplicaMatriz(double *matrizACuda, double *matrizBCuda, doubl
         int idx = linha * tam + pulo * THREADSPERBLOCK + threadIdx.x;
         //Se a posição ultrapassar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
-        {
             subMatrizA[threadIdx.y][threadIdx.x] = 0;
-        }
         //Caso contrário colocamos o valor em nossa sub matriz
         else
-        {
             subMatrizA[threadIdx.y][threadIdx.x] = matrizACuda[idx];
-        }
         //Calcula a posição do valor que iremos pegar da matriz B
         idx = (pulo * THREADSPERBLOCK + threadIdx.y) * tam + coluna;
         //Se a posição ultrapassar o limite, apenas colocamos 0 em nossa sub matriz
         if(idx >= tam*tam)
-        {
             subMatrizB[threadIdx.y][threadIdx.x] = 0;
-        }  
         //Caso contrário colocamos o valor em nossa sub matriz
         else
-        {
             subMatrizB[threadIdx.y][threadIdx.x] = matrizBCuda[idx];
-        }
 
         //É necessário haver uma sincronização das threads para somarmos a resposta, por conta de nossas variáveis compartilhadas
         __syncthreads();
         //É feito o calculo do valor
         for (int k = 0; k < THREADSPERBLOCK; ++k) 
-        {
             calculo += subMatrizA[threadIdx.y][k] * subMatrizB[k][threadIdx.x];
-        }
 
         //Aguarda as threads sincronizarem novamente antes de começar uma nova iteração
         __syncthreads();
     }
     //Se estiver tudo correto com nossos indices de linha e coluna atualizamos o valor da matriz resultado C
     if(linha < tam && coluna < tam)
-    {
         matrizCCuda[linha * tam + coluna] = calculo;
-    }
 }
 
 
