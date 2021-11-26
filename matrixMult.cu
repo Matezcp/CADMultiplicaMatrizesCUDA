@@ -1,3 +1,9 @@
+/*
+GRUPO:
+Mateus Zanetti Camargo Penteado - 11219202
+Yure Pablo do Nascimento Oliveira - 11275317
+Breno Alves de Sousa - 11345555
+*/
 #include<stdio.h>
 #include<stdlib.h>
 #include <cuda.h>
